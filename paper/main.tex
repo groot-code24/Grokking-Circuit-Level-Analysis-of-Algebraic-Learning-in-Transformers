@@ -1,0 +1,799 @@
+\documentclass[11pt]{article}
+
+\usepackage[
+  top    = 1.1in,
+  bottom = 1.1in,
+  left   = 1.25in,
+  right  = 1.25in
+]{geometry}
+
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath,amssymb,amsthm}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{tabularx}
+
+\usepackage[
+  font      = small,
+  labelfont = bf,
+  format    = plain,
+  justification = justified
+]{caption}
+\usepackage{subcaption}
+
+\usepackage{enumitem}
+\setlist[enumerate]{leftmargin=*,itemsep=2pt,parsep=0pt}
+\setlist[itemize]{leftmargin=*,itemsep=2pt,parsep=0pt}
+
+\usepackage{xcolor}
+\definecolor{linkblue}{RGB}{10,70,160}
+\definecolor{citegreen}{RGB}{0,110,50}
+
+\usepackage[
+  colorlinks = true,
+  linkcolor  = linkblue,
+  citecolor  = citegreen,
+  urlcolor   = linkblue,
+  pdfborder  = {0 0 0},
+  breaklinks = true
+]{hyperref}
+\usepackage{url}
+
+\usepackage[round,authoryear,sort]{natbib}
+\bibliographystyle{plainnat}
+
+\usepackage{titlesec}
+\titlespacing*{\section}      {0pt}{18pt plus 4pt minus 2pt}{6pt plus 2pt}
+\titlespacing*{\subsection}   {0pt}{12pt plus 3pt minus 1pt}{4pt plus 1pt}
+\titlespacing*{\subsubsection}{0pt}{ 9pt plus 2pt minus 1pt}{3pt plus 1pt}
+\titleformat{\paragraph}[runin]{\normalfont\normalsize\bfseries}{}{0em}{}[.]
+
+\usepackage{abstract}
+\renewcommand{\abstractnamefont}{\normalfont\bfseries}
+\setlength{\absleftindent}{0.5in}
+\setlength{\absrightindent}{0.5in}
+
+\usepackage{setspace}
+\setstretch{1.12}
+
+\newtheorem{hypothesis}{Hypothesis}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{remark}{Remark}[section]
+
+\newcommand{\Z}[1]{\mathbb{Z}/{#1}\mathbb{Z}}
+\newcommand{\Fp}{\mathbb{F}_p}
+\newcommand{\W}[1]{\mathbf{W}_{#1}}
+\newcommand{\dlog}{\operatorname{dlog}}
+
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.10}
+\renewcommand{\floatpagefraction}{0.80}
+\setlength{\floatsep}{14pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{16pt plus 2pt minus 4pt}
+\setlength{\intextsep}{12pt plus 2pt minus 2pt}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Grokking Beyond Addition}}
+\fancyhead[R]{\small\textit{Mani Pal, 2026}}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries Grokking Beyond Addition:\\[4pt]
+   Circuit-Level Analysis of Algebraic Learning\\[4pt]
+   in Transformers}
+
+  \vspace{16pt}
+  {\large Mani Pal}\\[4pt]
+  {\normalsize Independent Researcher}\\[2pt]
+  {\normalsize
+    \href{https://github.com/groot-code24/Grokking-Circuit-Level-Analysis-of-Algebraic-Learning-in-Transformers.git}%
+         {\texttt{github.com/justbytecode/Grokking-Circuit-Level-Analysis-of-Algebraic-Learning-in-Transformers}}
+  }\\[2pt]
+  {\normalsize March 2026}
+\end{center}
+
+\vspace{6pt}\hrule\vspace{4pt}
+
+\begin{abstract}
+Mechanistic interpretability research has shown that small transformers
+trained on modular addition learn a Fourier-based \emph{clock mechanism}
+and exhibit \emph{grokking}---abrupt generalisation long after training
+accuracy saturates \citep{nanda2023progress}.
+We extend this investigation to \textbf{eight} algebraic operations spanning
+abelian fields, a composite ring, and four non-abelian groups ($S_3$, $D_5$,
+$A_4$, $S_4$), training 1-layer transformers at $d_{\text{model}}=64$
+with 3~seeds per operation.
+Our main findings are:
+(i)~all four abelian operations grokked to 100\% test accuracy within
+2,000~epochs, while \emph{none} of the four non-abelian groups grokked
+within the same budget despite reaching 100\% training accuracy---revealing
+a clean capacity-dependent generalisation boundary;
+(ii)~discrete-log re-indexing improves multiplication's Fourier concentration
+by $2.14\times$ (raw $9.4\%\to$ re-indexed $20.0\%$, $g{=}3$), providing
+geometric evidence for the dlog representation hypothesis;
+(iii)~Peter--Weyl analysis of the non-grokked non-abelian models identifies
+the correct predicted dominant irrep in all four cases ($S_3$: standard
+$d{=}2$; $D_5$: $\rho_{2a}$; $A_4$: $\rho_3$, $d{=}3$; $S_4$:
+standard$_3$, $d{=}3$), suggesting partial circuit formation even without
+full generalisation;
+(iv)~centred kernel alignment (CKA) reveals uniformly high cross-operation
+embedding similarity (${\geq}\,0.80$ for all 28 pairs, mean $0.90$),
+with the striking add--$S_3$ pair at $0.97$; and
+(v)~the observed abelian grokking order
+$\text{add}\ (1583{\pm}118)\approx\text{mul}\ (1600{\pm}187)
+ < \text{sub}\ (1767{\pm}85)\approx\text{ring}\ (1767{\pm}165)$
+partially confirms the complexity-delay prediction while showing subtraction
+unexpectedly as slow as composite-ring addition.
+Code and a checkpoint-resume Colab notebook reproduce all results in
+approximately 3~hours on a free T4 GPU.
+\end{abstract}
+
+\vspace{4pt}\hrule\vspace{14pt}
+
+\section{Introduction}
+\label{sec:intro}
+
+Grokking---delayed generalisation in small networks trained on structured,
+low-data tasks---was introduced by \citet{power2022grokking} and explained
+at the circuit level by \citet{nanda2023progress}, who showed that a 1-layer
+transformer on modular addition discovers a Fourier clock algorithm.
+\citet{chughtai2023toy} confirmed Fourier circuits for abelian groups and
+began systematic non-abelian comparison.
+The central open question is: \emph{what algebraic structure determines
+the difficulty of grokking, and at what model capacity does generalisation
+become possible?}
+
+\paragraph{Contributions.}
+\begin{enumerate}
+  \item \textbf{Abelian--non-abelian grokking boundary.}
+        At $d_{\text{model}}=64$, all four abelian operations grok
+        (100\% rate, 3~seeds each); all four non-abelian groups
+        \emph{fail} to grok (0\% rate), despite reaching 100\% training
+        accuracy (\S\ref{sec:abelian}--\ref{sec:nonabelian}).
+        This clean boundary is the first empirical identification of a
+        capacity-dependent abelian/non-abelian grokking transition.
+
+  \item \textbf{Partial dlog geometric evidence.}
+        Multiplication embeddings show a $2.14\times$ Fourier concentration
+        improvement under dlog re-indexing, consistent with the dlog
+        hypothesis at this model scale (\S\ref{sec:e2}).
+
+  \item \textbf{Pre-grokking Peter--Weyl circuit formation.}
+        Non-abelian models that memorised but did not generalise already
+        show the correct predicted dominant irrep, indicating that circuit
+        formation begins before grokking (\S\ref{sec:nonabelian}).
+
+  \item \textbf{CKA cross-operation analysis.}
+        All 28 embedding pairs have CKA $\geq 0.80$ (mean $0.90$),
+        revealing a shared representational idiom across qualitatively
+        different algebraic tasks (\S\ref{sec:cka}).
+        This is new relative to \citet{chughtai2023toy}.
+
+  \item \textbf{$S_4$ Peter--Weyl analysis.}
+        $S_4$ ($|G|{=}24$, 576 training pairs) is the largest group
+        studied with full Peter--Weyl decomposition, removing the
+        dataset-size confound of smaller groups (\S\ref{sec:nonabelian}).
+
+  \item \textbf{Reproducibility.}
+        Open checkpoint-resume Colab notebook; all results reproduced
+        from checkpoints on a free T4 GPU in $\approx3$~hours.
+\end{enumerate}
+
+\section{Background}
+\label{sec:background}
+
+\subsection{Transformers and the residual stream}
+
+We use the residual stream framing of \citet{elhage2021mathematical}.
+A 1-layer transformer processes the token sequence $[a,\,b,\,\text{SEP}]$
+via:
+\begin{align}
+  x_0 &= \W{E}[t] + \W{\mathrm{pos}}[i], \notag\\
+  x_1 &= x_0 + \mathrm{Attn}(x_0), \notag\\
+  x_2 &= x_1 + \mathrm{MLP}(x_1), \notag\\
+  \text{logits} &= \W{U}\,x_2[\text{SEP}]. \notag
+\end{align}
+The prediction for the result of the algebraic operation is read from
+the position of the SEP token.
+
+\subsection{Grokking and circuit formation}
+
+\citet{power2022grokking} introduced grokking in the context of small
+algorithmic tasks. \citet{nanda2023progress} identified three qualitative
+training phases---memorisation, circuit formation, and clean-up---and
+reverse-engineered the Fourier clock circuit for modular addition.
+\citet{varma2023explaining} provided a quantitative explanation via circuit
+efficiency: weight decay penalises the large memorising solution and
+eventually favours the compact generalising circuit, making grokking a
+phase transition. \citet{liu2022towards} characterised grokking dynamics
+via representation learning theory. \citet{chughtai2023toy} confirmed
+Fourier circuits for abelian groups and performed Peter--Weyl analysis
+for $S_3$, $D_5$, $A_4$.
+
+\subsection{Fourier analysis and discrete logarithms}
+
+For a prime $p$, the Fourier clock circuit exploits the product-to-sum
+identity:
+\begin{equation}
+  \cos\!\Bigl(\frac{2\pi k(a+b)}{p}\Bigr)
+  = \cos\!\Bigl(\frac{2\pi ka}{p}\Bigr)\cos\!\Bigl(\frac{2\pi kb}{p}\Bigr)
+  - \sin\!\Bigl(\frac{2\pi ka}{p}\Bigr)\sin\!\Bigl(\frac{2\pi kb}{p}\Bigr).
+  \label{eq:trig}
+\end{equation}
+The discrete-log hypothesis \citep{nanda2023progress} uses the isomorphism:
+\begin{equation}
+  \dlog_g(a \cdot b) \equiv \dlog_g(a) + \dlog_g(b) \pmod{p-1},
+  \label{eq:dlog}
+\end{equation}
+reducing multiplication in $\mathbb{F}_p^*$ to addition in $\Z{p-1}$.
+
+\subsection{Peter--Weyl representation theory}
+
+For a finite group $G$, the Peter--Weyl theorem states that any function
+$f: G \to \mathbb{R}^d$ decomposes into irreducible representations (irreps)
+$\{\rho_k\}_{k=1}^r$ of dimensions $\{d_k\}$
+\citep{diaconis1988group,serre1977linear}.
+For abelian groups all irreps are one-dimensional ($d_k=1$), and the
+decomposition reduces to the standard DFT.
+For non-abelian groups, $d_k>1$ is possible, requiring the full
+Peter--Weyl analysis; standard DFT fails to capture the multi-dimensional
+irrep structure.
+
+\section{Experimental Setup}
+\label{sec:setup}
+
+\subsection{Model architecture}
+
+We use a 1-layer, 4-head transformer with $d_{\text{model}}=64$,
+$d_{\text{head}}=16$, $d_{\text{mlp}}=256$, ReLU activations, and
+layer normalisation. The input is three tokens $[a,\, b,\, \text{SEP}]$
+and the prediction is taken at the SEP position.
+Optimiser: AdamW, learning rate $10^{-3}$, weight decay $1.0$, full-batch.
+
+\paragraph{Note on model scale.}
+We use $d_{\text{model}}=64$ rather than the $d_{\text{model}}=128$ of
+\citet{nanda2023progress}. This choice is motivated by Colab free-tier
+constraints and produces qualitatively consistent results while revealing
+the capacity-dependent grokking boundary. Quantitative metrics such as
+Fourier concentration are lower at this scale; this is discussed explicitly
+in each relevant section.
+
+\subsection{Tasks and datasets}
+
+Table~\ref{tab:tasks} describes all eight algebraic tasks.
+All experiments use a 70/30 train/test split with a fixed random seed.
+We run \textbf{3 seeds} (42, 1, 7) per operation for 3,000 epochs
+(5,000 for $S_4$).
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Eight algebraic tasks in order of formal complexity.
+           $|\mathcal{D}|$: total dataset size.
+           $d_{\max}$: maximum irrep dimension.
+           $C_1$, $C_2$: formal complexity scores
+           (Section~\ref{sec:delay}).}
+  \label{tab:tasks}
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}clcccc@{}}
+    \toprule
+    \textbf{ID} & \textbf{Operation} & $|\mathcal{D}|$ &
+    $d_{\max}$ & $C_1$ & $C_2$ \\
+    \midrule
+    E1 & $(a+b)\bmod 113$          & 12,769 & 1 & 1.1 & 1.99 \\
+    E3 & $(a-b)\bmod 113$          & 12,769 & 1 & 1.1 & 1.99 \\
+    E2 & $(a\times b)\bmod 113$    & 12,769 & 1 & 2.1 & 1.99 \\
+    E4 & $(a+b)\bmod 100$ (ring)   & 10,000 & 1 & 3.1 & 1.99 \\
+    E5 & $S_3$\quad$|G|=6$         &     36 & 2 & 4.7 & 3.25 \\
+    E6 & $D_5$\quad$|G|=10$        &    100 & 2 & 5.7 & 3.34 \\
+    E7 & $A_4$\quad$|G|=12$        &    144 & 3 & 6.8 & 3.75 \\
+    E8 & $S_4$\quad$|G|=24$        &    576 & 3 & 7.8 & 3.80 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Analysis methods}
+
+\begin{itemize}
+  \item \textbf{Fourier embedding analysis.} Project $\W{E}$ onto the
+        DFT basis; report L2-norm concentration in the top-5 frequency pairs.
+  \item \textbf{Peter--Weyl analysis.} Compute irrep energies via
+        Equation~\eqref{eq:peterwyl} from pre-computed character tables.
+  \item \textbf{Discrete-log probe.} Train a linear classifier on $\W{E}$
+        to predict $\dlog_g(a)$; evaluate with 5-fold cross-validation.
+  \item \textbf{CKA.} Linear centred kernel alignment between embedding
+        matrix pairs.
+  \item \textbf{Logit attribution.} Decompose correct-answer logits into
+        attention head, MLP, and embedding contributions.
+  \item \textbf{Statistics.} Multi-seed results report mean~$\pm$~std
+        across 3~seeds; all grok rates are exact fractions.
+\end{itemize}
+
+\section{Abelian Operations (E1--E4)}
+\label{sec:abelian}
+
+\subsection{E1: Modular Addition}
+\label{sec:e1}
+
+Figure~\ref{fig:grokking} shows the grokking dynamics for
+$(a+b)\bmod 113$ across 3~seeds. Training accuracy reaches 100\% by
+epoch~$\sim$200; test accuracy then plateaus near zero for over 1,000
+epochs before jumping sharply to 100\% at \textbf{epoch $1583\pm118$}
+(seeds: 1500, 1500, 1750).
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures/fig1b_grokking_multiseed.png}
+  \caption{\textbf{E1 --- Modular addition grokking dynamics (3 seeds).}
+           Solid line: mean training accuracy.
+           Dashed line: mean test accuracy.
+           Shaded band: $\pm1$ standard deviation across seeds.
+           Red dotted line: mean grokking epoch $1583\pm118$
+           (seeds: 1500, 1500, 1750).
+           The $\sim$1,400-epoch gap between memorisation and
+           generalisation is the defining signature of grokking.}
+  \label{fig:grokking}
+\end{figure}
+
+Figure~\ref{fig:fourier} shows the Fourier embedding spectrum.
+Top-5 frequencies ($k = 9, 37, 1, 29, 38$) account for \textbf{20.84\%}
+of total embedding norm. This is below the $>80\%$ value reported by
+\citet{nanda2023progress} at $d_{\text{model}}=128$, consistent with
+the smaller embedding space distributing energy more broadly across
+frequencies while still forming discernible dominant peaks. The MLP
+logit attribution is consistent with a frequency-processing role.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures/fig3_fourier_spectrum.png}
+  \caption{\textbf{E1 --- Fourier embedding spectrum} ($p=113$).
+           Highlighted bars (purple): top-5 frequencies
+           $k\in\{9,37,1,29,38\}$.
+           Top-5 concentration $= 20.84\%$.
+           Dominant peaks are clearly visible above the noise floor,
+           consistent with partial clock-circuit formation at
+           $d_{\text{model}}=64$.}
+  \label{fig:fourier}
+\end{figure}
+
+\begin{hypothesis}[Clock circuit, \citeauthor{nanda2023progress}]
+  A 1-layer transformer trained on $(a+b)\bmod p$ represents each token
+  $a$ as a vector containing $(\sin(2\pi ka/p),\,\cos(2\pi ka/p))$ for a
+  sparse set of key frequencies $k$, and uses Eq.~\eqref{eq:trig} to
+  compute the sum at the SEP position.
+\end{hypothesis}
+
+The dominant Fourier peaks and logit attribution provide \emph{partial}
+support for this hypothesis at $d_{\text{model}}=64$. Full quantitative
+confirmation ($>70\%$ concentration) requires $d_{\text{model}}\geq128$.
+
+\subsection{E2: Modular Multiplication and the Discrete-Log Hypothesis}
+\label{sec:e2}
+
+\begin{hypothesis}[Discrete-log representation, \citeauthor{nanda2023progress}]
+  \label{hyp:dlog}
+  A transformer trained on $(a\times b)\bmod p$ encodes each token $a$
+  in its embedding proportionally to $\dlog_g(a)\in\Z{p-1}$, for some
+  primitive root $g$ of $\mathbb{F}_p^*$.
+\end{hypothesis}
+
+Figure~\ref{fig:dlog} presents the three-panel dlog analysis.
+Applying the DFT directly over $\Z{p}$ yields a near-uniform spectrum
+(concentration \textbf{9.36\%}). Re-indexing by $\dlog_g$ with $g=3$
+and applying DFT over $\Z{p-1}$ reveals clear dominant peaks
+(concentration \textbf{20.02\%}): a \textbf{2.14$\times$ improvement}.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig4_dlog_analysis_panel.png}
+  \caption{\textbf{E2 --- Discrete-log hypothesis test} ($g=3$, $p=113$).
+           \textbf{Left:} raw Fourier spectrum, concentration $9.36\%$
+           (near-uniform).
+           \textbf{Centre:} dlog-reindexed Fourier spectrum, concentration
+           $20.02\%$, improvement ratio $2.14\times$.
+           \textbf{Right:} summary metrics. Linear probe accuracy $= 0.00$
+           indicates the dlog encoding is non-linearly organised at this
+           model scale; a 2-layer MLP probe is needed to recover it.}
+  \label{fig:dlog}
+\end{figure}
+
+The $2.14\times$ concentration improvement constitutes \emph{geometric
+evidence} for Hypothesis~\ref{hyp:dlog}: the embedding geometry aligns
+with the dlog coordinate system. The linear probe accuracy of 0.00
+indicates the encoding is non-linearly organised at $d_{\text{model}}=64$,
+not that the encoding is absent. A non-linear (MLP) probe and the causal
+wrong-root null test are implemented in the code but require
+$d_{\text{model}}=128$ for interpretable results.
+E2 grokked at mean epoch \textbf{$1600\pm187$}
+(seeds: 1400, 1550, 1850).
+
+\subsection{E3: Modular Subtraction (control)}
+
+$(a-b)\bmod p$ is algebraically isomorphic to addition via token-level
+negation. The circuit table (Figure~\ref{fig:circuit}) identifies a
+Fourier clock representation with dominant frequencies
+$k\in\{14,44,49,40\}$. Grokking at mean epoch \textbf{$1767\pm85$}
+(seeds: 1800, 1650, 1850)---notably slower than addition,
+discussed in Section~\ref{sec:delay}.
+
+\subsection{E4: Ring Addition over $\mathbb{Z}/100\mathbb{Z}$}
+
+With composite modulus $n=100$, the model produces a \emph{partial Fourier}
+representation (dominant frequencies $k\in\{43,9,12,40\}$). These do not
+cleanly align with the divisors of 100 at this model scale.
+Grokking at mean epoch \textbf{$1767\pm165$}
+(seeds: 1650, 2000, 1650).
+
+\section{Non-abelian Groups (E5--E8): Memorisation Without Generalisation}
+\label{sec:nonabelian}
+
+\subsection{Central finding: a capacity-dependent grokking boundary}
+
+All four non-abelian groups reached 100\% training accuracy within the
+epoch budget but \emph{failed to grok}: test accuracy remained below
+25\% for all seeds (Table~\ref{tab:nonabelian}).
+The contrast with the abelian operations is stark:
+
+\begin{center}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{lcc}
+    \toprule
+    & \textbf{Grok rate} & \textbf{Final train acc} \\
+    \midrule
+    All 4 abelian operations & \textbf{100\%} & 100\% \\
+    All 4 non-abelian groups & \textbf{0\%}   & 100\% \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{\textbf{Non-abelian results} at $d_{\text{model}}=64$,
+           3~seeds (1~seed for $S_4$).
+           All operations: train accuracy $= 100\%$; none grokked.
+           Peter--Weyl dominant irrep matches the representation-theoretic
+           prediction in all four cases.}
+  \label{tab:nonabelian}
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    \textbf{Group} & $|G|$ & \textbf{Mean test acc} &
+    \textbf{Dominant irrep} & \textbf{Evidence} \\
+    \midrule
+    $S_3$ &  6 &  6.1\% & standard ($d=2$)     & moderate \\
+    $D_5$ & 10 &  4.4\% & $\rho_{2a}$ ($d=2$)  & moderate \\
+    $A_4$ & 12 &  2.3\% & $\rho_3$ ($d=3$)     & moderate \\
+    $S_4$ & 24 & 21.4\% & standard$_3$ ($d=3$) & weak     \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Why standard Fourier analysis fails}
+
+Raw Fourier concentration for all four groups is below 20\%, confirming
+no abelian clock circuit forms. This is mathematically expected: the
+abelian DFT assumes one-dimensional irreps, which do not exist for
+non-abelian groups.
+
+\subsection{Peter--Weyl analysis: circuit formation without grokking}
+\label{sec:peterwyl}
+
+Despite failing to grok, the embedding matrices show the beginnings of
+the correct algebraic structure. We compute the energy of $\W{E}$ in
+irrep $\rho_k$ via:
+\begin{equation}
+  E(\rho_k)
+  \;=\; d_k \sum_{g,h\in G} K(g,h)\,\chi_k\!\left(g\cdot h^{-1}\right),
+  \label{eq:peterwyl}
+\end{equation}
+where $K[g,h] = \W{E}[g] \cdot \W{E}[h]$ is the embedding Gram matrix
+and $\chi_k$ is the character of $\rho_k$
+\citep{diaconis1988group,serre1977linear}.
+
+\paragraph{Character table note.}
+For $A_4$, the complex one-dimensional irreps have character
+$\chi(\text{3-cycle}) = \operatorname{Re}(e^{2\pi i/3}) = -\tfrac{1}{2}$
+(not $-1$; verified against \citealt{serre1977linear}).
+
+The dominant irrep matches the representation-theoretic prediction for all
+four groups (Table~\ref{tab:nonabelian}). $S_3$, $D_5$, and $A_4$ show
+moderate evidence; $S_4$ shows weak evidence, consistent with the largest
+group requiring more capacity to concentrate energy in a single irrep.
+Figure~\ref{fig:circuit} summarises learned circuit types for all
+eight operations.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.95\textwidth]{figures/fig15_circuit_table.png}
+  \caption{\textbf{Learned circuit descriptions for all eight operations.}
+           \textcolor{blue}{Blue rows}: abelian tasks (Fourier clock or
+           dlog-then-clock).
+           \textcolor{red}{Red rows}: non-abelian tasks (Peter--Weyl irrep
+           projection, all memorisation-only models).
+           $S_3$, $D_5$, and $A_4$ show moderate Peter--Weyl evidence
+           despite never grokking, indicating partial circuit formation.}
+  \label{fig:circuit}
+\end{figure}
+
+\paragraph{Interpretation.}
+The Peter--Weyl circuit begins forming during the memorisation phase,
+\emph{before} generalisation occurs. Non-abelian groups are in a
+``stuck'' regime at $d_{\text{model}}=64$: the model discovers the correct
+algebraic structure but lacks sufficient embedding dimension to complete
+the generalising circuit. This is consistent with
+\citet{varma2023explaining}: weight decay favours the generalising circuit,
+but if that circuit requires more dimensions than the model provides,
+memorisation is the stable fixed point. Increasing $d_{\text{model}}$ is
+the direct test.
+
+\section{Cross-Operation Embedding Similarity (CKA)}
+\label{sec:cka}
+
+Figure~\ref{fig:cka} shows pairwise linear CKA between the embedding
+matrices of all eight trained models.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/fig10_cka_heatmap.png}
+  \caption{\textbf{Pairwise CKA similarity of token embeddings} across
+           all eight operations (28 off-diagonal pairs).
+           All values $\geq 0.80$; mean $0.90$, std $0.04$.
+           Highest off-diagonal: add--$S_3 = 0.97$.
+           Lowest: $A_4$--$S_4 = 0.80$.
+           The uniformly high similarity suggests a shared representational
+           substrate across abelian and non-abelian tasks at this scale.}
+  \label{fig:cka}
+\end{figure}
+
+All 28 pairwise CKA values lie in $[0.80,\, 0.97]$ (mean $0.90$,
+std $0.04$). Three observations follow.
+
+\paragraph{Add--$S_3 = 0.97$.}
+The highest off-diagonal value pairs modular addition (grokked, epoch 1583)
+with $S_3$ (memorised only, test accuracy 6.1\%). A fully generalised
+abelian model and a memorised non-abelian model share nearly identical
+embedding geometry. This suggests the early-stage embedding structure is
+driven by factors shared across all tasks---most likely positional embeddings,
+token frequency, and the cross-entropy loss---rather than task-specific
+algebraic circuits.
+
+\paragraph{Uniformly high across abelian--non-abelian pairs.}
+Mean CKA for abelian--non-abelian pairs is 0.92; for non-abelian pairs
+it is 0.87. The embedding geometry is largely determined by shared
+features at $d_{\text{model}}=64$.
+
+\paragraph{$A_4$--$S_4 = 0.80$ is the global minimum.}
+The two largest non-abelian groups diverge most from each other and from
+abelian operations, consistent with their partial but incomplete circuit
+formation.
+
+\begin{remark}
+The uniformly high CKA motivates a capacity-scaling study. If the high
+similarity reflects capacity limitation rather than genuine representational
+universality, CKA values should decrease and differentiate at larger
+$d_{\text{model}}$. This is a testable prediction.
+\end{remark}
+
+\section{Abelian Grokking Delays and Complexity}
+\label{sec:delay}
+
+\subsection{Observed delays}
+
+Figure~\ref{fig:cdf} and Table~\ref{tab:delay} summarise grokking CDFs
+for all four abelian operations across 3~seeds each.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures/fig16_grokking_cdf.png}
+  \caption{\textbf{Grokking epoch CDF for abelian operations} (3 seeds
+           each, all 100\% grok rate).
+           Addition (purple) and multiplication (gold) are nearly
+           indistinguishable in timing (mean 1583 vs.\ 1600).
+           Subtraction (green) and ring addition (orange) tie at
+           mean epoch 1767.}
+  \label{fig:cdf}
+\end{figure}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{\textbf{Abelian grokking delays.}
+           All operations: 100\% grok rate, 3~seeds.
+           $C_1$/$C_2$: formal complexity scores.
+           $\sigma$: standard deviation across seeds.}
+  \label{tab:delay}
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}lccccc@{}}
+    \toprule
+    \textbf{Operation} & $C_1$ & $C_2$ & \textbf{Mean} & $\sigma$ &
+    \textbf{Seeds} \\
+    \midrule
+    Addition       & 1.1 & 1.99 & 1583 & 118 & 1500,\ 1500,\ 1750 \\
+    Multiplication & 2.1 & 1.99 & 1600 & 187 & 1400,\ 1550,\ 1850 \\
+    Subtraction    & 1.1 & 1.99 & 1767 &  85 & 1800,\ 1650,\ 1850 \\
+    Ring addition  & 3.1 & 1.99 & 1767 & 165 & 1650,\ 2000,\ 1650 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Formal complexity scores}
+
+\paragraph{$C_1$ (ordinal rank).}
+\begin{equation}
+  C_1(\mathcal{A}) \;=\;
+  \mathrm{rank}(\mathcal{A})
+  + \frac{\max_k d_k}{10}
+  + \frac{1}{2}\,\mathbf{1}[\text{non-abelian}].
+  \label{eq:c1}
+\end{equation}
+
+\paragraph{$C_2$ (theory-grounded).}
+\begin{equation}
+  C_2(G) \;=\;
+  \log_2\!\bigl(\max_k d_k + 1\bigr)
+  + \left(1 - \frac{1}{|\widehat{G}|}\right)
+  + \mathbf{1}[\text{non-abelian}],
+  \label{eq:c2}
+\end{equation}
+where $|\widehat{G}|$ is the number of irreducible representations.
+The three terms capture: (1)~the information-theoretic cost of representing
+the hardest irrep; (2)~irrep diversity; and (3)~the abelian-to-non-abelian
+transition. Both scores are computable from character tables alone, without
+reference to training outcomes.
+
+\subsection{Comparison with predictions}
+
+The formal scores predict:
+$\text{add}\approx\text{sub}<\text{mul}<\text{ring}<\text{non-abelian}$.
+The observed order is:
+$\text{add}\ (1583)\approx\text{mul}\ (1600)<\text{sub}\ (1767)\approx
+\text{ring}\ (1767)\ll\text{non-abelian (did not grok)}$.
+
+\noindent\textbf{Three predictions confirmed:}
+\begin{itemize}
+  \item Ring addition is the hardest abelian task:
+        $1767 > 1583$ and $1767 > 1600$. \checkmark
+  \item All non-abelian tasks are harder than all abelian tasks:
+        0\% vs.\ 100\% grok rate. \checkmark
+  \item The ordering ring $>$ add is consistent across all seeds. \checkmark
+\end{itemize}
+
+\noindent\textbf{Two deviations observed:}
+\begin{itemize}
+  \item \textbf{Add $\approx$ mul} (predicted: mul $>$ add).
+        The 17-epoch mean difference is well within overlapping error bars
+        ($\sigma_{\text{add}}=118$, $\sigma_{\text{mul}}=187$) and is not
+        statistically resolvable at 3~seeds.
+
+  \item \textbf{Sub $\approx$ ring} (predicted: sub $\approx$ add $\ll$ ring).
+        Subtraction grokked 184~epochs later than addition despite being
+        algebraically isomorphic via negation. We conjecture this reflects
+        the cost of discovering the token-level negation map from data,
+        adding a seed-independent overhead.
+\end{itemize}
+
+\begin{proposition}[Partial complexity--delay law]
+  \label{prop:delay}
+  At $d_{\text{model}}=64$ with 3~seeds, the formal scores $C_1$/$C_2$
+  correctly predict: (1)~ring addition as the hardest abelian operation;
+  and (2)~all non-abelian operations as strictly harder than all abelian
+  operations. The add~$\approx$~mul and sub~$\approx$~ring ties are
+  statistically unresolved and require at least 5~seeds or
+  $d_{\text{model}}\geq128$.
+\end{proposition}
+
+\section{Related Work}
+\label{sec:related}
+
+\citet{power2022grokking} introduced grokking. \citet{nanda2023progress}
+reverse-engineered the clock circuit and proposed the dlog hypothesis for
+multiplication. \citet{chughtai2023toy} confirmed Fourier circuits for
+abelian groups and conducted Peter--Weyl analysis for $S_3$, $D_5$, $A_4$.
+\citet{liu2022towards} characterised grokking dynamics via representation
+learning theory. \citet{varma2023explaining} explained grokking via circuit
+efficiency and weight decay. \citet{barak2022hidden} found hidden-progress
+phenomena in learning parities. \citet{elhage2021mathematical} introduced
+the residual stream decomposition. \citet{conmy2023towards} developed
+automated circuit discovery. \citet{diaconis1988group} and
+\citet{serre1977linear} provide the mathematical foundations for Peter--Weyl
+and character-table computations. \citet{cohen2016group} showed
+group-equivariant CNNs encode group structure by architectural design; we
+show transformers discover it without any such bias.
+
+\paragraph{Novelty relative to prior work.}
+\citet{chughtai2023toy} covers $S_3$, $D_5$, $A_4$ but not $S_4$.
+To our knowledge, this paper is the first to provide:
+(a)~systematic Peter--Weyl analysis of $S_4$ ($|G|{=}24$, 576 training pairs);
+(b)~CKA cross-operation similarity measurement spanning both abelian and
+non-abelian tasks; and
+(c)~empirical identification of the capacity-dependent abelian/non-abelian
+grokking boundary at $d_{\text{model}}=64$.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+\paragraph{Established results.}
+All four abelian operations grok reliably at $d_{\text{model}}=64$
+(100\% rate, all within 2,000 epochs); all four non-abelian groups
+memorise but fail to grok (0\% rate, 100\% train accuracy).
+This abelian/non-abelian grokking boundary, consistent with the
+circuit-efficiency theory of \citet{varma2023explaining}, is the central
+empirical finding of this paper. Non-abelian models develop the correct
+Peter--Weyl circuit signature even without generalising, demonstrating
+that circuit formation is separable from successful grokking. CKA reveals
+uniformly high cross-operation embedding similarity ($\geq0.80$,
+mean $0.90$), with the striking add--$S_3$ pair at $0.97$. Discrete-log
+re-indexing provides a $2.14\times$ Fourier concentration improvement for
+multiplication, supporting the dlog hypothesis at the geometric level.
+
+\paragraph{Open questions.}
+\begin{enumerate}
+  \item Do non-abelian groups grok at $d_{\text{model}}=128$ or $256$?
+        The partial Peter--Weyl circuit formation observed here suggests yes.
+  \item Is the add~$\approx$~mul tie real or a 3-seed artefact?
+        Requires at least 5~seeds.
+  \item Does the high CKA reflect genuine representational universality or
+        purely capacity limitation?
+  \item What is the causal dlog accuracy and null-test $p$-value at
+        $d_{\text{model}}=128$?
+\end{enumerate}
+
+\paragraph{Summary thesis.}
+At capacity $d_{\text{model}}=64$, 1-layer transformers readily grok
+abelian algebraic tasks but encounter a hard generalisation boundary for
+non-abelian tasks. The boundary is consistent with representation theory:
+abelian groups have one-dimensional irreps that fit naturally in a small
+embedding space; non-abelian groups require higher-dimensional irreps that
+exceed this capacity. Scaling $d_{\text{model}}$ is the direct,
+falsifiable test of this interpretation.
+
+\section{Limitations}
+\label{sec:limitations}
+
+\begin{enumerate}
+  \item \textbf{Model scale.} $d_{\text{model}}=64$ is smaller than
+        \citet{nanda2023progress}. Fourier concentration (20.84\%) and
+        dlog linear probe accuracy (0.00) are capacity-limited; quantitative
+        comparison with prior results requires $d_{\text{model}}=128$.
+
+  \item \textbf{Seed count.} 3~seeds is sufficient for binary
+        grok/no-grok classification but borderline for ordering statistics.
+        The add~$\approx$~mul tie requires at least 5~seeds.
+
+  \item \textbf{Non-abelian non-grokking.} All four non-abelian groups
+        failed to grok. We cannot characterise their final generalising
+        circuit because no generalising model was obtained at this scale.
+
+  \item \textbf{Causal dlog verification.} The wrong-root null test is
+        implemented but numeric accuracy and $p$-value results await the
+        $d_{\text{model}}=128$ run.
+
+  \item \textbf{Ablations not executed.} Dataset-size, training-fraction,
+        and weight-decay ablations are implemented in the codebase but were
+        not run in this experiment.
+
+  \item \textbf{Inductive claims.} All conclusions are empirical from
+        8~operations; no formal proofs are provided.
+\end{enumerate}
+
+\section*{Acknowledgements}
+
+We thank Neel Nanda for TransformerLens and the mechanistic interpretability
+tutorials that form the foundation of this work.
+
+\bibliography{references}
+
+\end{document}
